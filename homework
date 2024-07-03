@@ -1,0 +1,213 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+class Cheese {
+    private String name;
+    private double price;
+    private int quantity;
+
+    public Cheese(String name, double price, int quantity) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    @Override
+    public String toString() {
+        return name + " - $" + price + " (" + quantity + " in stock)";
+    }
+}
+
+class CheeseShop {
+    private List<Cheese> inventory = new ArrayList<>();
+    private List<Cheese> cart = new ArrayList<>();
+
+    public void addCheeseToCart(String name, int quantity) {
+        for (Cheese cheese : inventory) {
+            if (cheese.getName().equalsIgnoreCase(name) && cheese.getQuantity() >= quantity) {
+                cheese.setQuantity(cheese.getQuantity() - quantity);
+                cart.add(new Cheese(name, cheese.getPrice(), quantity));
+                System.out.println(quantity + " " + name + "(s) added to cart.");
+                return;
+            }
+        }
+        System.out.println("Cheese not available or insufficient quantity.");
+    }
+
+    public void removeCheeseFromCart(String name) {
+        for (Cheese cheese : cart) {
+            if (cheese.getName().equalsIgnoreCase(name)) {
+                cart.remove(cheese);
+                System.out.println(name + " removed from cart.");
+                return;
+            }
+        }
+        System.out.println("Cheese not in cart.");
+    }
+
+    public void displayAvailableCheeses() {
+        System.out.println("Available cheeses:");
+        for (Cheese cheese : inventory) {
+            System.out.println(cheese);
+        }
+    }
+
+    public void displayCart() {
+        System.out.println("Cheeses in cart:");
+        for (Cheese cheese : cart) {
+            System.out.println(cheese);
+        }
+    }
+
+    public List<Cheese> getInventory() {
+        return inventory;
+    }
+
+    public List<Cheese> getCart() {
+        return cart;
+    }
+}
+
+class CheeseService {
+    private CheeseShop cheeseShop;
+
+    public CheeseService(CheeseShop cheeseShop) {
+        this.cheeseShop = cheeseShop;
+    }
+
+    public void addCheese(String name, double price, int quantity) {
+        cheeseShop.getInventory().add(new Cheese(name, price, quantity));
+        System.out.println(name + " added to inventory.");
+    }
+
+    public void removeCheese(String name) {
+        List<Cheese> inventory = cheeseShop.getInventory();
+        inventory.removeIf(cheese -> cheese.getName().equalsIgnoreCase(name));
+        System.out.println(name + " removed from inventory.");
+    }
+}
+
+class Customer {
+    private double money;
+    private List<Cheese> ownedCheeses = new ArrayList<>();
+
+    public Customer(double money) {
+        this.money = money;
+    }
+
+    public double getMoney() {
+        return money;
+    }
+
+    public void setMoney(double money) {
+        this.money = money;
+    }
+
+    public void buyCheese(CheeseShop cheeseShop) {
+        double totalCost = cheeseShop.getCart().stream().mapToDouble(cheese -> cheese.getPrice() * cheese.getQuantity()).sum();
+        if (money >= totalCost) {
+            money -= totalCost;
+            ownedCheeses.addAll(cheeseShop.getCart());
+            cheeseShop.getCart().clear();
+            System.out.println("Purchase successful. Remaining balance: $" + money);
+        } else {
+            System.out.println("Insufficient funds. Purchase failed.");
+        }
+    }
+
+    public void displayOwnedCheeses() {
+        System.out.println("Owned cheeses:");
+        for (Cheese cheese : ownedCheeses) {
+            System.out.println(cheese);
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        CheeseShop cheeseShop = new CheeseShop();
+        CheeseService cheeseService = new CheeseService(cheeseShop);
+        Customer customer = new Customer(100.0); // Customer starts with $100
+
+        while (true) {
+            System.out.println("\n1. Add cheese to inventory");
+            System.out.println("2. Remove cheese from inventory");
+            System.out.println("3. Display available cheeses");
+            System.out.println("4. Add cheese to cart");
+            System.out.println("5. Remove cheese from cart");
+            System.out.println("6. Display cart");
+            System.out.println("7. Buy cheeses in cart");
+            System.out.println("8. Display owned cheeses");
+            System.out.println("9. Exit");
+            System.out.print("Choose an option: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();  // Consume newline
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter cheese name: ");
+                    String name = scanner.nextLine();
+                    System.out.print("Enter cheese price: ");
+                    double price = scanner.nextDouble();
+                    System.out.print("Enter cheese quantity: ");
+                    int quantity = scanner.nextInt();
+                    cheeseService.addCheese(name, price, quantity);
+                    break;
+                case 2:
+                    System.out.print("Enter cheese name to remove: ");
+                    name = scanner.nextLine();
+                    cheeseService.removeCheese(name);
+                    break;
+                case 3:
+                    cheeseShop.displayAvailableCheeses();
+                    break;
+                case 4:
+                    System.out.print("Enter cheese name to add to cart: ");
+                    name = scanner.nextLine();
+                    System.out.print("Enter quantity: ");
+                    quantity = scanner.nextInt();
+                    cheeseShop.addCheeseToCart(name, quantity);
+                    break;
+                case 5:
+                    System.out.print("Enter cheese name to remove from cart: ");
+                    name = scanner.nextLine();
+                    cheeseShop.removeCheeseFromCart(name);
+                    break;
+                case 6:
+                    cheeseShop.displayCart();
+                    break;
+                case 7:
+                    customer.buyCheese(cheeseShop);
+                    break;
+                case 8:
+                    customer.displayOwnedCheeses();
+                    break;
+                case 9:
+                    System.out.println("Exiting...");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+                    break;
+            }
+        }
+    }
+}
